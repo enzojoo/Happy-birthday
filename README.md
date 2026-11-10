@@ -2,9 +2,11 @@
 
 온라인 롤링페이퍼 페이지입니다.
 
-## 메시지 넣기
+## 메시지
 
-`messages.js` 의 배열을 아래 형식으로 채우고 push 하면 1~2분 뒤 페이지에 반영됩니다.
+- **사이트에서 직접 남기기:** 「✍️ 메시지 남기기」로 쓴 글은 Firestore(`enzo-784b0`)에 저장되고 바로 붙습니다. 다른 사람이 쓴 글도 20초마다 자동으로 나타납니다.
+- **이상한 글 지우기:** [Firebase 콘솔 › Firestore › messages](https://console.firebase.google.com/project/enzo-784b0/firestore/databases/-default-/data/~2Fmessages) 에서 해당 문서를 삭제합니다. (보안 규칙상 사이트에서는 새 글 쓰기만 되고, 수정·삭제는 안 됩니다. 규칙은 `firebase/firestore.rules`)
+- **따로 받은 메시지 넣기:** `messages.js` 의 배열을 아래 형식으로 채우고 push 하면 1~2분 뒤 반영됩니다.
 
 ```js
 { name: "이름", message: "메시지\n줄바꿈은 이렇게" },
