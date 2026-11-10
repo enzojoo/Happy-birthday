@@ -16,6 +16,7 @@
     --ink-soft: #7a6a60;
     --accent: #b5543c;
     --accent-dark: #8f3f2b;
+    --gold: #e9b44c;
     --line: #e8dccd;
     --c1: #fff2b8; --c2: #ffd9c7; --c3: #d9ecd2; --c4: #d4e6f5; --c5: #e6dcf3; --c6: #fbd8e2;
   }
@@ -29,6 +30,7 @@
     color: var(--ink);
     font-family: "Gowun Dodum", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   /* ---------- 표지 ---------- */
@@ -46,10 +48,15 @@
   .hero h1 {
     font-family: "Gowun Batang", serif; font-weight: 700;
     font-size: clamp(40px, 9vw, 84px); line-height: 1.1;
-    margin: 0 0 12px;
+    margin: 0 0 12px; position: relative;
   }
-  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero h1 em { font-style: normal; color: var(--accent); display: inline-block; }
+  .hero h1 em span { display: inline-block; animation: pop .7s cubic-bezier(.3,1.6,.5,1) both; }
+  @keyframes pop { 0% { opacity: 0; transform: translateY(40px) scale(.4) rotate(-12deg); } 100% { opacity: 1; transform: none; } }
   .hero p.sub { font-size: 17px; color: var(--ink-soft); margin: 0 0 36px; line-height: 1.7; }
+
+  .twinkle { position: absolute; color: var(--gold); pointer-events: none; animation: twinkle 2.4s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: .15; transform: scale(.6) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(45deg); } }
 
   .cake { width: 180px; height: 190px; margin-bottom: 28px; }
   .flame { transform-origin: 90px 52px; animation: flicker 1.2s ease-in-out infinite alternate; transition: opacity .4s, transform .4s; }
@@ -64,11 +71,56 @@
     background: var(--accent); color: #fff; border: 0; border-radius: 999px;
     padding: 15px 30px; box-shadow: 0 6px 18px rgba(181,84,60,.28);
     transition: background .2s, transform .2s;
+    position: relative; overflow: hidden;
   }
+  .btn::after { /* 반짝이는 광택 */
+    content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent);
+    animation: shine 2.8s ease-in-out infinite;
+  }
+  @keyframes shine { 0%, 60% { left: -60%; } 100% { left: 130%; } }
   .btn:hover { background: var(--accent-dark); transform: translateY(-2px); }
+  .btn:disabled { cursor: default; opacity: .85; }
   .scroll-hint { position: absolute; bottom: 24px; font-size: 13px; color: var(--ink-soft); opacity: 0; transition: opacity .6s; }
   .opened .scroll-hint { opacity: 1; animation: bob 1.6s ease-in-out infinite; }
   @keyframes bob { 50% { transform: translateY(6px); } }
+
+  /* ---------- 조명 끄기 + 불꽃놀이 ---------- */
+  .night {
+    position: fixed; inset: 0; z-index: 40; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 120%, #2a1d4a 0%, #120d24 55%, #07050f 100%);
+    opacity: 0; transition: opacity 1s ease;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    padding: 16px;
+  }
+  .night.on { opacity: 1; }
+  .night .big {
+    font-family: "Gowun Batang", serif; font-weight: 700; color: #fff7e0;
+    font-size: clamp(36px, 8vw, 88px); line-height: 1.15;
+    text-shadow: 0 0 12px rgba(255,214,120,.9), 0 0 36px rgba(255,170,80,.7), 0 0 80px rgba(255,120,80,.5);
+    transform: scale(.6); opacity: 0; transition: transform 1.2s cubic-bezier(.2,1.4,.4,1) .5s, opacity 1s ease .5s;
+  }
+  .night .big small { display: block; font-size: .42em; letter-spacing: .3em; margin-top: 14px; font-weight: 400; }
+  .night.on .big { transform: scale(1); opacity: 1; }
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 45; pointer-events: none; }
+
+  /* ---------- 풍선 ---------- */
+  .balloon { position: fixed; bottom: -160px; z-index: 46; pointer-events: none; animation: rise linear forwards; }
+  .balloon svg { display: block; animation: sway 3s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+  @keyframes rise { to { transform: translateY(calc(-100vh - 260px)); } }
+  @keyframes sway { from { transform: rotate(-7deg) translateX(-10px); } to { transform: rotate(7deg) translateX(10px); } }
+
+  /* ---------- 음악 버튼 ---------- */
+  .music {
+    position: fixed; right: 16px; bottom: 16px; z-index: 60;
+    width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer;
+    background: #fff; color: var(--ink); font-size: 22px;
+    box-shadow: 0 4px 16px rgba(59,47,42,.18);
+    display: none; align-items: center; justify-content: center;
+  }
+  .music.show { display: flex; }
+  .music.playing { animation: pulse 1.65s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 4px 16px rgba(59,47,42,.18), 0 0 0 8px rgba(181,84,60,.15); } }
 
   /* ---------- 메시지 ---------- */
   .board { max-width: 1120px; margin: 0 auto; padding: 24px 16px 80px; }
@@ -88,16 +140,20 @@
     transform: rotate(var(--r, 0deg));
     transition: transform .25s, box-shadow .25s;
     position: relative;
-    opacity: 0; translate: 0 16px;
+    opacity: 0;
   }
-  .card.in { opacity: 1; translate: 0 0; transition: transform .25s, box-shadow .25s, opacity .6s, translate .6s; }
+  .card.in { animation: flyin .8s cubic-bezier(.2,1.3,.4,1) both; }
+  @keyframes flyin {
+    0% { opacity: 0; transform: translateY(60px) rotate(calc(var(--r, 0deg) * -6)) scale(.7); }
+    100% { opacity: 1; transform: rotate(var(--r, 0deg)); }
+  }
   .card::before { /* 마스킹 테이프 */
     content: ""; position: absolute; top: -10px; left: 50%;
     width: 84px; height: 22px; margin-left: -42px;
     background: rgba(255,255,255,.55); border: 1px solid rgba(0,0,0,.04);
     transform: rotate(calc(var(--r, 0deg) * -2));
   }
-  .card:hover, .card:focus-visible { transform: rotate(0) scale(1.02); box-shadow: 0 2px 4px rgba(59,47,42,.1), 0 16px 32px rgba(59,47,42,.14); outline: none; }
+  .card.in:hover, .card.in:focus-visible { animation: none; opacity: 1; transform: rotate(0) scale(1.03); box-shadow: 0 2px 4px rgba(59,47,42,.1), 0 16px 32px rgba(59,47,42,.14); outline: none; }
   .card .msg {
     font-family: "Nanum Pen Script", cursive; font-size: 25px; line-height: 1.35;
     white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere;
@@ -118,19 +174,16 @@
     background: var(--c, var(--c1)); color: var(--ink);
     box-shadow: 0 24px 60px rgba(0,0,0,.25);
   }
+  dialog[open] { animation: zoom .35s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes zoom { from { transform: scale(.7) rotate(-3deg); opacity: 0; } }
   dialog::backdrop { background: rgba(59,47,42,.45); backdrop-filter: blur(3px); }
   dialog .msg { font-family: "Nanum Pen Script", cursive; font-size: 30px; line-height: 1.4; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; margin: 0 0 20px; }
   dialog .from { font-family: "Nanum Pen Script", cursive; font-size: 26px; text-align: right; color: var(--ink-soft); margin: 0; }
   dialog .close { position: absolute; top: 10px; right: 14px; background: none; border: 0; font-size: 26px; cursor: pointer; color: var(--ink-soft); }
 
-  /* ---------- 꽃가루 ---------- */
-  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
-  .confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
-  @keyframes fall { to { transform: translate(var(--dx), 110vh) rotate(var(--rot)); } }
-
   @media (prefers-reduced-motion: reduce) {
-    .flame, .opened .scroll-hint { animation: none; }
-    .card { opacity: 1; translate: 0 0; }
+    .flame, .opened .scroll-hint, .twinkle, .btn::after, .music.playing, .hero h1 em span { animation: none; }
+    .card, .card.in { opacity: 1; animation: none; }
   }
 
   /* ---------- 인쇄 (실물 전달용) ---------- */
@@ -138,12 +191,12 @@
     @page { size: A4; margin: 14mm; }
     body { background: #fff; }
     .hero { min-height: auto; padding: 0 0 10mm; }
-    .btn, .scroll-hint, .confetti, dialog { display: none !important; }
+    .btn, .scroll-hint, .night, #fx, .balloon, .music, .twinkle, dialog { display: none !important; }
     .cake { width: 90px; height: 95px; margin-bottom: 6mm; }
     .hero p.sub { margin-bottom: 0; }
     .board { padding: 0; }
     .cards { columns: 2; column-gap: 8mm; }
-    .card { opacity: 1 !important; translate: 0 0 !important; transform: none !important; box-shadow: none; border: 1px solid #e3d6c6; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin-bottom: 8mm; }
+    .card { opacity: 1 !important; animation: none !important; transform: none !important; box-shadow: none; border: 1px solid #e3d6c6; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin-bottom: 8mm; }
     .card::before { display: none; }
     .card .msg { -webkit-line-clamp: unset; display: block; overflow: visible; }
     footer { padding-top: 6mm; break-inside: avoid; }
@@ -157,14 +210,14 @@
     <g class="smoke"><path d="M90 40 q-8 -12 0 -22 q8 -10 0 -20" fill="none" stroke="#b9ada4" stroke-width="3" stroke-linecap="round"/></g>
     <path class="flame" d="M90 30 C80 44 82 54 90 56 C98 54 100 44 90 30Z" fill="#f5a623"/>
     <rect x="86" y="56" width="8" height="30" rx="2" fill="#e8cfe0"/>
-    <rect x="30" y="86" width="120" height="38" rx="8" fill="#fff"/>
+    <rect x="30" y="86" width="120" height="38" rx="8" fill="#fff" stroke="#efe2d2" stroke-width="2"/>
     <path d="M30 100 q15 14 30 0 t30 0 t30 0 t30 0" fill="none" stroke="#f3b6a3" stroke-width="6" stroke-linecap="round"/>
     <rect x="18" y="122" width="144" height="46" rx="8" fill="#b5543c"/>
     <path d="M18 138 q18 12 36 0 t36 0 t36 0 t36 0" fill="none" stroke="#fbf6ee" stroke-width="5" stroke-linecap="round" opacity=".85"/>
     <rect x="6" y="166" width="168" height="10" rx="5" fill="#d9c7b3"/>
   </svg>
   <div class="date">2026 · 11 · 21</div>
-  <h1>Happy Birthday,<br><em>Scott</em></h1>
+  <h1>Happy Birthday,<br><em id="name">Scott</em></h1>
   <p class="sub">스캇님의 생신을 진심으로 축하드립니다.<br>동료들이 마음을 담아 한 장씩 적었어요.</p>
   <button class="btn" id="blow">🕯️ 촛불 끄고 편지 열기</button>
   <div class="scroll-hint">아래로 내려 보세요 ↓</div>
@@ -183,6 +236,12 @@
   <div class="sign">From. 함께 일하는 동료들 💐</div>
 </footer>
 
+<div class="night" id="night" aria-hidden="true">
+  <div class="big">Happy Birthday<br>Scott<small>2026 · 11 · 21</small></div>
+</div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<button class="music" id="music" aria-label="배경음악 끄기/켜기">🔊</button>
+
 <dialog id="modal">
   <button class="close" aria-label="닫기">×</button>
   <p class="msg"></p>
@@ -191,77 +250,283 @@
 
 <script src="messages.js"></script>
 <script>
+  const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ================= 메시지 카드 ================= */
   const COLORS = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6"];
   const ROT = [-1.6, 1.2, -0.6, 1.8, -1.1, 0.7, -1.9, 0.9];
   const list = (window.MESSAGES || []).filter(m => m && m.message && String(m.message).trim());
-
   const cards = document.getElementById("cards");
   document.getElementById("count").textContent = list.length;
+  if (!list.length) cards.outerHTML = '<p class="empty">아직 도착한 메시지가 없어요.</p>';
 
-  if (!list.length) {
-    cards.outerHTML = '<p class="empty">아직 도착한 메시지가 없어요.</p>';
-  }
-
+  const nameOf = m => `From. ${String(m.name || "").trim() || "익명"}`;
   list.forEach((m, i) => {
     const card = document.createElement("button");
     card.className = "card";
     card.style.setProperty("--c", `var(${COLORS[i % COLORS.length]})`);
     card.style.setProperty("--r", `${ROT[i % ROT.length]}deg`);
-    const msg = document.createElement("p");
-    msg.className = "msg";
-    msg.textContent = String(m.message).trim();
-    const from = document.createElement("p");
-    from.className = "from";
-    from.textContent = `From. ${String(m.name || "").trim() || "익명"}`;
+    card.style.animationDelay = `${(i % 3) * 110}ms`;
+    const msg = document.createElement("p"); msg.className = "msg"; msg.textContent = String(m.message).trim();
+    const from = document.createElement("p"); from.className = "from"; from.textContent = nameOf(m);
     card.append(msg, from);
     card.addEventListener("click", () => openModal(m, card.style.getPropertyValue("--c")));
-    cards && cards.appendChild(card);
+    cards.appendChild(card);
   });
 
-  // 스크롤하면 카드가 하나씩 붙는 효과
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
   }, { threshold: 0.1 });
-  document.querySelectorAll(".card").forEach((c, i) => { c.style.transitionDelay = `${(i % 3) * 80}ms`; io.observe(c); });
+  document.querySelectorAll(".card").forEach(c => io.observe(c));
 
-  // 크게 보기
   const modal = document.getElementById("modal");
   function openModal(m, color) {
     modal.style.setProperty("--c", color);
     modal.querySelector(".msg").textContent = String(m.message).trim();
-    modal.querySelector(".from").textContent = `From. ${String(m.name || "").trim() || "익명"}`;
+    modal.querySelector(".from").textContent = nameOf(m);
     modal.showModal();
   }
   modal.querySelector(".close").addEventListener("click", () => modal.close());
   modal.addEventListener("click", e => { if (e.target === modal) modal.close(); });
 
-  // 촛불 끄기
+  /* ================= 표지 장식 ================= */
+  const nameEl = document.getElementById("name");
+  nameEl.innerHTML = [...nameEl.textContent].map((ch, i) => `<span style="animation-delay:${0.3 + i * 0.12}s">${ch}</span>`).join("");
   const hero = document.getElementById("hero");
-  document.getElementById("blow").addEventListener("click", function () {
-    hero.classList.add("blown", "opened");
-    this.textContent = "🎉 생신 축하드립니다!";
-    this.disabled = true;
-    confetti();
-    setTimeout(() => document.getElementById("board").scrollIntoView({ behavior: "smooth" }), 1400);
+  [[12, 22], [86, 18], [20, 70], [80, 64], [50, 10], [8, 46], [92, 40]].forEach(([x, y], i) => {
+    const s = document.createElement("span");
+    s.className = "twinkle"; s.textContent = "✦";
+    s.style.left = x + "%"; s.style.top = y + "%";
+    s.style.fontSize = (12 + (i % 3) * 6) + "px";
+    s.style.animationDelay = (i * 0.37) + "s";
+    hero.appendChild(s);
   });
 
-  function confetti() {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const box = document.createElement("div");
-    box.className = "confetti";
-    const palette = ["#b5543c", "#f5a623", "#f3b6a3", "#9cc28f", "#8fb8de", "#c3a6e3"];
-    for (let i = 0; i < 120; i++) {
-      const p = document.createElement("i");
-      p.style.left = Math.random() * 100 + "vw";
-      p.style.background = palette[i % palette.length];
-      p.style.setProperty("--dx", (Math.random() * 160 - 80) + "px");
-      p.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
-      p.style.animationDuration = (2.2 + Math.random() * 2) + "s";
-      p.style.animationDelay = (Math.random() * 0.6) + "s";
-      box.appendChild(p);
+  /* ================= 캔버스 효과 (불꽃놀이 · 꽃가루) ================= */
+  const cv = document.getElementById("fx"), ctx = cv.getContext("2d");
+  let W = 0, H = 0;
+  function resize() {
+    const d = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  resize(); addEventListener("resize", resize);
+
+  // 주사율(60Hz/120Hz)과 무관하게 같은 속도로 움직이도록 경과 시간(k = 60fps 기준 프레임 수)으로 계산
+  const parts = []; let running = false, last = 0;
+  function frame(now) {
+    const k = Math.min((now - last) / 16.67 || 1, 3); last = now;
+    ctx.clearRect(0, 0, W, H);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      if (!p.step(k)) { parts.splice(i, 1); continue; }
+      p.draw();
     }
-    document.body.appendChild(box);
-    setTimeout(() => box.remove(), 5000);
+    if (parts.length) requestAnimationFrame(frame); else { running = false; ctx.clearRect(0, 0, W, H); }
+  }
+  function add(p) { parts.push(p); if (!running) { running = true; last = performance.now(); requestAnimationFrame(frame); } }
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // 불꽃 파편
+  function Spark(x, y, vx, vy, hue, glitter) {
+    let a = 1; const decay = rand(0.011, 0.02); let px = x, py = y;
+    return {
+      fire: true,
+      step(k) { px = x; py = y; const f = 0.975 ** k; vx *= f; vy = vy * f + 0.045 * k; x += vx * k; y += vy * k; a -= decay * k; return a > 0; },
+      draw() {
+        if (glitter && Math.random() < 0.35) return;
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = `hsla(${hue},100%,${glitter ? 85 : 65}%,${a})`;
+        ctx.lineWidth = glitter ? 1.4 : 2.2;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+      }
+    };
+  }
+  function explode(x, y, shape) {
+    const hue = rand(0, 360), hue2 = (hue + rand(40, 140)) % 360;
+    if (shape === "heart") {
+      for (let i = 0; i < 90; i++) {
+        const t = (i / 90) * Math.PI * 2;
+        const hx = 16 * Math.sin(t) ** 3, hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+        add(Spark(x, y, hx * 0.32, hy * 0.32, 345 + rand(-10, 10), false));
+      }
+      return;
+    }
+    const n = shape === "ring" ? 70 : 110;
+    for (let i = 0; i < n; i++) {
+      const ang = rand(0, Math.PI * 2);
+      const sp = shape === "ring" ? 5.2 : rand(1, 6.5);
+      add(Spark(x, y, Math.cos(ang) * sp, Math.sin(ang) * sp, i % 2 ? hue : hue2, Math.random() < 0.3));
+    }
+  }
+  function rocket(shape) {
+    let x = rand(W * 0.15, W * 0.85), y = H + 10;
+    const ty = rand(H * 0.12, H * 0.45), vx = rand(-1, 1);
+    let vy = -Math.sqrt(2 * 0.12 * (y - ty)); // 정점에서 멈추도록 초속 계산
+    return {
+      fire: true,
+      step(k) {
+        x += vx * k; y += vy * k; vy += 0.12 * k;
+        if (vy >= 0) { explode(x, y, shape); return false; }
+        return true;
+      },
+      draw() {
+        ctx.globalCompositeOperation = "lighter";
+        ctx.fillStyle = "rgba(255,230,180,.95)";
+        ctx.beginPath(); ctx.arc(x, y, 2.4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,180,90,.35)";
+        ctx.beginPath(); ctx.arc(x - vx, y - vy * 1.5, 1.6, 0, Math.PI * 2); ctx.fill();
+      }
+    };
+  }
+
+  // 꽃가루 조각
+  const CONF = ["#b5543c", "#e9b44c", "#f3b6a3", "#9cc28f", "#8fb8de", "#c3a6e3", "#ff7aa2", "#ffd54f"];
+  function Confetto(x, y, vx, vy) {
+    const w = rand(6, 11), h = rand(9, 16), color = CONF[Math.floor(Math.random() * CONF.length)];
+    let rot = rand(0, 6.28), vr = rand(-0.2, 0.2), wob = rand(0, 6.28), vw = rand(0.08, 0.2);
+    return {
+      step(k) {
+        const f = 0.985 ** k; vx *= f; vy = Math.min(vy * f + 0.22 * k, 4.2);
+        wob += vw * k; rot += vr * k; x += (vx + Math.sin(wob) * 0.8) * k; y += vy * k;
+        return y < H + 30;
+      },
+      draw() {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(1, Math.cos(wob));
+        ctx.fillStyle = color; ctx.fillRect(-w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+    };
+  }
+  function cannons() {
+    for (let i = parts.length - 1; i >= 0; i--) if (parts[i].fire) parts.splice(i, 1); // 밝은 배경에 남는 불꽃 잔상 정리
+    for (let i = 0; i < 140; i++) {
+      add(Confetto(-10, H * 0.85, rand(6, 15), rand(-19, -9)));
+      add(Confetto(W + 10, H * 0.85, -rand(6, 15), rand(-19, -9)));
+    }
+    for (let i = 0; i < 120; i++) add(Confetto(rand(0, W), rand(-H * 0.6, -20), rand(-1, 1), rand(1, 3)));
+  }
+
+  // 풍선
+  const BALLOON = ["#e8574a", "#f2a541", "#f6d55c", "#7bc47f", "#5aa9e6", "#a685e2", "#ff8fab"];
+  function balloons(n) {
+    for (let i = 0; i < n; i++) {
+      const b = document.createElement("div");
+      const size = rand(46, 82), c = BALLOON[i % BALLOON.length];
+      b.className = "balloon";
+      b.style.left = rand(0, 94) + "vw";
+      b.style.animationDuration = rand(6.5, 10.5) + "s";
+      b.style.animationDelay = rand(0, 1.8) + "s";
+      b.innerHTML = `<svg width="${size}" height="${size * 2}" viewBox="0 0 50 100" style="animation-delay:${rand(0, 2)}s">
+        <path d="M25 62 q-3 12 2 22 q4 8 -1 16" fill="none" stroke="#9a8c80" stroke-width="1"/>
+        <ellipse cx="25" cy="30" rx="22" ry="28" fill="${c}"/>
+        <ellipse cx="17" cy="19" rx="5" ry="8" fill="#fff" opacity=".35" transform="rotate(-25 17 19)"/>
+        <path d="M21 58 L29 58 L25 63 Z" fill="${c}"/></svg>`;
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 13000);
+    }
+  }
+
+  /* ================= 배경음악 (오르골 생일 축하 노래) ================= */
+  const Music = (() => {
+    const F = { F2: 87.31, G2: 98, C3: 130.81, A3: 220, B3: 246.94, C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23,
+                G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99 };
+    const MEL = [["G4",.75],["G4",.25],["A4",1],["G4",1],["C5",1],["B4",2],
+                 ["G4",.75],["G4",.25],["A4",1],["G4",1],["D5",1],["C5",2],
+                 ["G4",.75],["G4",.25],["G5",1],["E5",1],["C5",1],["B4",1],["A4",1],
+                 ["F5",.75],["F5",.25],["E5",1],["C5",1],["D5",1],["C5",3]];
+    // 마디별 화음: [베이스, [화음 구성음]] — 쿵짝짝 3박 반주
+    const C = ["C3", ["E4", "G4"]], G7 = ["G2", ["B3", "F4"]], G = ["G2", ["B3", "D4"]], Fm = ["F2", ["A3", "C4"]];
+    const BARS = [C, G7, G, C, C, Fm, [C, C, G], C];
+    const BEAT = 0.52, LOOP = 26; // 25박 + 쉼 1박
+    let ac, master, timer = null, on = false;
+
+    function tone(f, t, dur, type, vol) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.05);
+    }
+    function bell(f, t, dur) { // 오르골 느낌: 기음 + 배음
+      tone(f, t, dur + 1.2, "sine", 0.22);
+      tone(f * 2, t, 0.6, "sine", 0.05);
+      tone(f * 3.01, t, 0.25, "triangle", 0.025);
+    }
+    function playOnce(t0) {
+      let b = 0;
+      MEL.forEach(([n, d]) => { bell(F[n], t0 + b * BEAT, d * BEAT); b += d; });
+      BARS.forEach((bar, i) => {
+        const start = t0 + (1 + i * 3) * BEAT;
+        for (let k = 0; k < 3; k++) {
+          const [bass, chord] = Array.isArray(bar[0]) ? bar[k] : bar;
+          if (k === 0) tone(F[bass], start, BEAT * 1.6, "triangle", 0.13);
+          else chord.forEach(n => tone(F[n], start + k * BEAT, BEAT * 0.7, "sine", 0.045));
+        }
+      });
+    }
+    function schedule() {
+      playOnce(ac.currentTime + 0.08);
+      timer = setTimeout(schedule, LOOP * BEAT * 1000);
+    }
+    return {
+      start() {
+        if (!ac) {
+          ac = new (window.AudioContext || window.webkitAudioContext)();
+          master = ac.createGain(); master.gain.value = 0.9;
+          const delay = ac.createDelay(), fb = ac.createGain(), wet = ac.createGain();
+          delay.delayTime.value = 0.23; fb.gain.value = 0.28; wet.gain.value = 0.22;
+          master.connect(ac.destination);
+          master.connect(delay); delay.connect(fb).connect(delay); delay.connect(wet).connect(ac.destination);
+        }
+        ac.resume();
+        if (!on) { on = true; schedule(); }
+      },
+      stop() {
+        on = false; clearTimeout(timer);
+        if (ac) ac.suspend();
+      },
+      get on() { return on; }
+    };
+  })();
+
+  const musicBtn = document.getElementById("music");
+  musicBtn.addEventListener("click", () => {
+    if (Music.on) { Music.stop(); musicBtn.textContent = "🔇"; musicBtn.classList.remove("playing"); }
+    else { Music.start(); musicBtn.textContent = "🔊"; musicBtn.classList.add("playing"); }
+  });
+
+  /* ================= 촛불 끄기 시퀀스 ================= */
+  const night = document.getElementById("night");
+  const blowBtn = document.getElementById("blow");
+  let busy = false;
+  blowBtn.addEventListener("click", () => {
+    if (busy) return;
+    busy = true; blowBtn.disabled = true;
+    hero.classList.add("blown");
+    if (!Music.on) { Music.start(); musicBtn.textContent = "🔊"; }
+    musicBtn.classList.add("show", "playing");
+
+    if (REDUCED) { finish(); return; }
+
+    // 1) 조명이 꺼지고 불꽃놀이
+    setTimeout(() => night.classList.add("on"), 300);
+    const shapes = ["burst", "ring", "burst", "heart", "burst", "ring", "burst", "heart", "burst", "burst", "ring", "burst"];
+    shapes.forEach((s, i) => setTimeout(() => add(rocket(s)), 900 + i * 420 + rand(0, 200)));
+    setTimeout(() => { for (let i = 0; i < 4; i++) add(rocket(i % 2 ? "ring" : "burst")); }, 6200); // 피날레
+
+    // 2) 조명이 켜지고 꽃가루 대포 + 풍선
+    setTimeout(() => { night.classList.remove("on"); cannons(); balloons(14); }, 8200);
+    setTimeout(finish, 9600);
+  });
+  function finish() {
+    hero.classList.add("opened");
+    document.getElementById("board").scrollIntoView({ behavior: "smooth" });
+    blowBtn.textContent = "🎆 한 번 더 축하하기";
+    setTimeout(() => { busy = false; blowBtn.disabled = false; }, 1500);
   }
 </script>
 </body>
