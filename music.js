@@ -10,7 +10,7 @@
   const noteName = m => NAMES[m % 12] + (Math.floor(m / 12) - 1);
 
   // 구간별 템포: [[시작 박, BPM], ...] → 박을 초로 바꾸는 함수
-  const TEMPO = [[0, 84], [11, 90], [36, 84], [38, 80], [57, 68], [60, 54]];
+  const TEMPO = [[0, 84], [3, 90], [28, 84], [30, 80], [49, 68], [52, 54]];
   function sec(b) {
     let t = 0;
     for (let i = 0; i < TEMPO.length; i++) {
@@ -20,7 +20,7 @@
     }
     return t;
   }
-  const END_BEAT = 65;
+  const END_BEAT = 57;
 
   const MEL = [["G4", .75], ["G4", .25], ["A4", 1], ["G4", 1], ["C5", 1], ["B4", 2],
                ["G4", .75], ["G4", .25], ["A4", 1], ["G4", 1], ["D5", 1], ["C5", 2],
@@ -43,7 +43,7 @@
   const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 
   function buildScore() {
-    const ev = [], fx = [];
+    const ev = [];
     const add = (inst, note, b, d, v) => ev.push({ inst, m: typeof note === "number" ? note : M(note), b, d, v });
     const gliss = (rootMidi, from, to, b, d, v) => { // 장음계 하프 글리산도
       const notes = [];
@@ -51,20 +51,15 @@
       notes.forEach((m, i) => add("orchestral_harp", m, b + d * i / notes.length, 1.5, v));
     };
 
-    // ---------- 인트로 (0~11박): 팀파니 롤 → 팡파르 ----------
-    for (let b = 0; b < 6; b += 1 / 6) add("timpani", "G2", b, .3, .12 + .6 * b / 6);
-    fx.push({ type: "swell", b: 1.5, e: 6, v: .35 });
-    fx.push({ type: "crash", b: 6, v: .45 });
-    add("timpani", "C2", 6, 2, 1);
-    add("contrabass", "C2", 6, 3, .8); add("cello", "C3", 6, 3, .6); add("trombone", "C3", 6, 3, .6);
-    ["C4", "E4", "G4"].forEach(n => add("brass_section", n, 6, 3, .7));
-    ["E3", "G3", "C4"].forEach(n => add("french_horn", n, 6, 3, .5));
-    ["C4", "E4", "G4", "C5"].forEach(n => add("string_ensemble_1", n, 6, 3, .5));
-    [["G4", 6, .33], ["C5", 6.33, .33], ["E5", 6.66, .34], ["G5", 7, 2]].forEach(([n, b, d]) => add("trumpet", n, b, d, .8));
-    add("contrabass", "G2", 9, 2, .7); add("timpani", "G2", 9, 1, .7);
-    ["F3", "B3", "D4"].forEach(n => add("brass_section", n, 9, 2, .55));
-    ["G3", "B3", "D4", "F4"].forEach(n => add("string_ensemble_1", n, 9, 2, .45));
-    gliss(M("C4"), M("G3"), M("G5"), 9.5, 1.2, .35);
+    // ---------- 인트로 (0~3박): 짧은 팡파르 한 마디 ----------
+    add("timpani", "C2", 0, 2, .9);
+    add("contrabass", "C2", 0, 2, .8); add("cello", "C3", 0, 2, .6); add("trombone", "C3", 0, 2, .6);
+    ["C4", "E4", "G4"].forEach(n => add("brass_section", n, 0, 2, .7));
+    ["C4", "E4", "G4", "C5"].forEach(n => add("string_ensemble_1", n, 0, 2, .5));
+    [["G4", 0, .33], ["C5", .33, .33], ["E5", .66, .34], ["G5", 1, 1]].forEach(([n, b, d]) => add("trumpet", n, b, d, .8));
+    add("contrabass", "G2", 2, 1, .6);
+    ["F3", "B3", "D4"].forEach(n => add("brass_section", n, 2, 1, .5));
+    gliss(M("C4"), M("G3"), M("G5"), 2, .9, .3);
 
     // ---------- 1절·2절 ----------
     function verse(P, tr, BARS, full) {
@@ -128,30 +123,25 @@
         if (last && full) { // 마지막 화음: 팀파니 롤 + 크래시 + 하프 글리산도
           for (let r = 0; r < 4.5; r += 1 / 6) add("timpani", root, s + r, .3, .25 + .55 * r / 4.5);
           add("timpani", root, s + 4.5, 2, 1);
-          fx.push({ type: "crash", b: s, v: .55 });
-          fx.push({ type: "crash", b: s + 4.5, v: .4 });
           gliss(M("C3") + tr, M("C3") + tr, M("C6") + tr, s, 1.5, .35);
         }
       });
     }
 
-    verse(11, 0, BARS1, false); // 1절 C장조 (11박 못갖춘마디 → 12박부터 8마디)
+    verse(3, 0, BARS1, false); // 1절 C장조 (3박 못갖춘마디 → 4박부터 8마디)
 
-    // ---------- 전조 (36~38박): A7 로 끌어올려 D장조로 ----------
-    for (let b = 36; b < 39; b += 1 / 6) add("timpani", "A2", b, .3, .2 + .55 * (b - 36) / 3);
-    ["G3", "Db4", "E4", "A4"].forEach(n => add("brass_section", n, 36, 2, .55));
-    ["A3", "Db4", "E4", "G4"].forEach(n => add("string_ensemble_1", n, 36, 2, .5));
-    add("contrabass", "A2", 36, 2, .75);
-    fx.push({ type: "swell", b: 36, e: 39, v: .4 });
-    fx.push({ type: "crash", b: 39, v: .5 });
+    // ---------- 전조 (28~30박): A7 로 끌어올려 D장조로 ----------
+    for (let b = 28; b < 31; b += 1 / 6) add("timpani", "A2", b, .3, .2 + .55 * (b - 28) / 3);
+    ["G3", "Db4", "E4", "A4"].forEach(n => add("brass_section", n, 28, 2, .55));
+    ["A3", "Db4", "E4", "G4"].forEach(n => add("string_ensemble_1", n, 28, 2, .5));
+    add("contrabass", "A2", 28, 2, .75);
 
-    verse(38, 2, BARS2, true); // 2절 D장조 풀 오케스트라
+    verse(30, 2, BARS2, true); // 2절 D장조 풀 오케스트라
 
     // 전조부터는 한층 크게: 1절보다 확실히 웅장하게 들리도록 세기를 올림
-    ev.forEach(e => { if (e.b >= 36) e.v = Math.min(1, e.v * 1.45); });
-    fx.forEach(f => { if (f.b >= 36) f.v *= 1.3; });
+    ev.forEach(e => { if (e.b >= 28) e.v = Math.min(1, e.v * 1.45); });
 
-    return { ev, fx };
+    return { ev };
   }
 
   // ---------------- 재생 엔진 ----------------
@@ -162,20 +152,18 @@
   function createPlayer(base) {
     const score = buildScore();
     const LOOP = sec(END_BEAT) + 4;
-    let ac, bus, buffers = new Map(), ready = null, started = false, on = false, nextStart = 0, watcher = null, noise;
+    let ac, bus, buffers = new Map(), ready = null, started = false, on = false, nextStart = 0, watcher = null;
 
     function init() {
       ac = new (window.AudioContext || window.webkitAudioContext)();
       const comp = ac.createDynamicsCompressor();
       comp.threshold.value = -14; comp.ratio.value = 4;
-      const master = ac.createGain(); master.gain.value = .85;
+      const master = ac.createGain(); master.gain.value = 1.5;
       bus = ac.createGain();
       const verb = ac.createConvolver(), wet = ac.createGain();
       verb.buffer = impulse(2.8); wet.gain.value = .32;
       bus.connect(comp); bus.connect(verb).connect(wet).connect(comp);
       comp.connect(master).connect(ac.destination);
-      noise = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate);
-      const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
     function impulse(len) { // 콘서트홀 잔향
       const n = ac.sampleRate * len, buf = ac.createBuffer(2, n, ac.sampleRate);
@@ -208,23 +196,8 @@
       }
       src.connect(g).connect(bus); src.start(when); src.stop(end + .05);
     }
-    function cymbal(f, t0) {
-      const src = ac.createBufferSource(), hp = ac.createBiquadFilter(), g = ac.createGain();
-      src.buffer = noise; hp.type = "highpass"; hp.frequency.value = 3500;
-      if (f.type === "crash") {
-        g.gain.setValueAtTime(f.v, t0 + sec(f.b));
-        g.gain.exponentialRampToValueAtTime(.001, t0 + sec(f.b) + 2.8);
-        src.start(t0 + sec(f.b)); src.stop(t0 + sec(f.b) + 2.9);
-      } else {
-        g.gain.setValueAtTime(.001, t0 + sec(f.b));
-        g.gain.exponentialRampToValueAtTime(f.v, t0 + sec(f.e));
-        src.loop = true; src.start(t0 + sec(f.b)); src.stop(t0 + sec(f.e));
-      }
-      src.connect(hp).connect(g).connect(bus);
-    }
     function schedule(t0) {
       score.ev.forEach(e => note(e, t0 + sec(e.b), sec(e.b + e.d) - sec(e.b)));
-      score.fx.forEach(f => cymbal(f, t0));
     }
     return {
       preload,
