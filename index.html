@@ -166,6 +166,7 @@
 
   footer { text-align: center; padding: 0 16px 56px; color: var(--ink-soft); font-family: "Gowun Batang", serif; }
   footer .sign { font-size: 20px; color: var(--ink); margin-top: 6px; }
+  footer .credit { font-family: "Gowun Dodum", sans-serif; font-size: 11px; opacity: .55; margin-top: 28px; }
 
   /* ---------- 크게 보기 ---------- */
   dialog {
@@ -191,7 +192,7 @@
     @page { size: A4; margin: 14mm; }
     body { background: #fff; }
     .hero { min-height: auto; padding: 0 0 10mm; }
-    .btn, .scroll-hint, .night, #fx, .balloon, .music, .twinkle, dialog { display: none !important; }
+    .btn, .scroll-hint, .credit, .night, #fx, .balloon, .music, .twinkle, dialog { display: none !important; }
     .cake { width: 90px; height: 95px; margin-bottom: 6mm; }
     .hero p.sub { margin-bottom: 0; }
     .board { padding: 0; }
@@ -234,6 +235,7 @@
 <footer>
   <div>늘 감사합니다. 행복한 하루 보내세요.</div>
   <div class="sign">From. 함께 일하는 동료들 💐</div>
+  <div class="credit">♪ Instrument samples: FluidR3 GM soundfont by Frank Wen (CC BY 3.0)</div>
 </footer>
 
 <div class="night" id="night" aria-hidden="true">
@@ -249,6 +251,7 @@
 </dialog>
 
 <script src="messages.js"></script>
+<script src="music.js"></script>
 <script>
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -429,69 +432,9 @@
     }
   }
 
-  /* ================= 배경음악 (오르골 생일 축하 노래) ================= */
-  const Music = (() => {
-    const F = { F2: 87.31, G2: 98, C3: 130.81, A3: 220, B3: 246.94, C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23,
-                G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99 };
-    const MEL = [["G4",.75],["G4",.25],["A4",1],["G4",1],["C5",1],["B4",2],
-                 ["G4",.75],["G4",.25],["A4",1],["G4",1],["D5",1],["C5",2],
-                 ["G4",.75],["G4",.25],["G5",1],["E5",1],["C5",1],["B4",1],["A4",1],
-                 ["F5",.75],["F5",.25],["E5",1],["C5",1],["D5",1],["C5",3]];
-    // 마디별 화음: [베이스, [화음 구성음]] — 쿵짝짝 3박 반주
-    const C = ["C3", ["E4", "G4"]], G7 = ["G2", ["B3", "F4"]], G = ["G2", ["B3", "D4"]], Fm = ["F2", ["A3", "C4"]];
-    const BARS = [C, G7, G, C, C, Fm, [C, C, G], C];
-    const BEAT = 0.52, LOOP = 26; // 25박 + 쉼 1박
-    let ac, master, timer = null, on = false;
-
-    function tone(f, t, dur, type, vol) {
-      const o = ac.createOscillator(), g = ac.createGain();
-      o.type = type; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.05);
-    }
-    function bell(f, t, dur) { // 오르골 느낌: 기음 + 배음
-      tone(f, t, dur + 1.2, "sine", 0.22);
-      tone(f * 2, t, 0.6, "sine", 0.05);
-      tone(f * 3.01, t, 0.25, "triangle", 0.025);
-    }
-    function playOnce(t0) {
-      let b = 0;
-      MEL.forEach(([n, d]) => { bell(F[n], t0 + b * BEAT, d * BEAT); b += d; });
-      BARS.forEach((bar, i) => {
-        const start = t0 + (1 + i * 3) * BEAT;
-        for (let k = 0; k < 3; k++) {
-          const [bass, chord] = Array.isArray(bar[0]) ? bar[k] : bar;
-          if (k === 0) tone(F[bass], start, BEAT * 1.6, "triangle", 0.13);
-          else chord.forEach(n => tone(F[n], start + k * BEAT, BEAT * 0.7, "sine", 0.045));
-        }
-      });
-    }
-    function schedule() {
-      playOnce(ac.currentTime + 0.08);
-      timer = setTimeout(schedule, LOOP * BEAT * 1000);
-    }
-    return {
-      start() {
-        if (!ac) {
-          ac = new (window.AudioContext || window.webkitAudioContext)();
-          master = ac.createGain(); master.gain.value = 0.9;
-          const delay = ac.createDelay(), fb = ac.createGain(), wet = ac.createGain();
-          delay.delayTime.value = 0.23; fb.gain.value = 0.28; wet.gain.value = 0.22;
-          master.connect(ac.destination);
-          master.connect(delay); delay.connect(fb).connect(delay); delay.connect(wet).connect(ac.destination);
-        }
-        ac.resume();
-        if (!on) { on = true; schedule(); }
-      },
-      stop() {
-        on = false; clearTimeout(timer);
-        if (ac) ac.suspend();
-      },
-      get on() { return on; }
-    };
-  })();
+  /* ================= 배경음악 (오케스트라 생일 축하 노래, music.js) ================= */
+  const Music = createOrchestra("sounds/");
+  Music.preload(); // 샘플을 미리 받아 두어 버튼을 누르자마자 연주되게 함
 
   const musicBtn = document.getElementById("music");
   musicBtn.addEventListener("click", () => {
